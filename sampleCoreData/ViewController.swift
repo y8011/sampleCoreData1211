@@ -125,6 +125,12 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
             //<>の中はモデルファイルで指定したエンティティ名
             let query: NSFetchRequest<ToDo> = ToDo.fetchRequest()
             
+            // pickerViewで選択されている文字を取得
+            let selectedRow = catPickerView.selectedRow(inComponent: 0) //引数は列番号
+            let catTitle = catList[selectedRow]
+
+            query.predicate = NSPredicate(format: "catTitle = %@", catTitle)
+            
             do {
                 //データの一括取得
                 let fetchResults = try viewContext.fetch(query)
@@ -205,7 +211,11 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         newRecord.setValue(toDoTitle.text, forKey: "title")
         newRecord.setValue(Date(), forKey: "saveDate")  //Date()で現在日時が取得できます
         
-        
+        // pickerViewで選択されている文字を取得
+        let selectedRow = catPickerView.selectedRow(inComponent: 0) //引数は列番号
+        let catTitle = catList[selectedRow]
+        newRecord.setValue( catTitle, forKey: "catTitle")
+        print("cattile:\(catTitle)")
         
         //docatch エラーの多い処理はこの中に書くという文法ルールなので必要
         do {
@@ -260,6 +270,55 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         
         
     }
+    
+    
+    @IBAction func tapUpdate(_ sender: UIButton) {
+        print("update")
+        //AppDelegateを使う準備をしておく
+        let appD:AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        
+        //エンティティを操作するためのオブジェクトを作成
+        let viewContext = appD.persistentContainer.viewContext
+ 
+        let query: NSFetchRequest<ToDo> = ToDo.fetchRequest()
+        
+
+        
+        query.predicate = NSPredicate(format: "title = %@", "鈴")
+
+        
+        
+        do {
+           
+            //データの一括取得
+            let fetchResults = try viewContext.fetch(query)
+            
+            //取得したデータを、デバッグエリアにループで表示
+            for result: AnyObject in fetchResults {
+
+                //レコードオブジェクトに値のセット
+                result.setValue(toDoTitle.text, forKey: "title")
+                
+
+                
+
+                
+                do{
+                    try viewContext.save()
+                    readCoreData(ref: "ToDo")
+                    
+                    todoTableView.reloadData()
+                    
+                }catch {
+                    
+                }
+            }
+        } catch  {
+            
+        }
+        
+    }
+    
     
     
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
@@ -333,6 +392,12 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         let satu:CGFloat = CGFloat(catList.count - row) / CGFloat(catList.count)
         
         catPickerView.backgroundColor = UIColor(hue: 180/359, saturation: satu, brightness: 1, alpha: 1)
+        
+        readCoreData(ref: "ToDo")
+
+        //テーブルビューを再表示
+        todoTableView.reloadData()
+        
     }
     
     
